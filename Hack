@@ -1,0 +1,11 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Bende0724s Script", "DarkTheme"
+local Tab = Window:NewTab("Gamer")
+local Section = Tab:NewSection("Main")
+Section:NewButton("ButtonText", "ButtonInfo", function()
+    print("Gamer")
+end)
+local Section = Tab:NewSection("Section Name")
+Section:NewButton("ButtonText", "ButtonInfo", function()
+    print("Clicked")
+end)
