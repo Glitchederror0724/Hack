@@ -3,8 +3,8 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
-local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local VirtualUser = game:GetService("VirtualUser")
 local Camera = workspace.CurrentCamera or workspace:WaitForChild("Camera")
 local LocalPlayer = Players.LocalPlayer
 
@@ -13,16 +13,19 @@ local settings = {
     flySpeed = 50,
     espEnabled = true,
     espColor = Color3.fromRGB(255, 0, 0),
-    maxDistance = 500,
     walkSpeed = 16,
     jumpPower = 50,
-    dashSpeed = 100,
-    dashDuration = 0.3,
     fullbrightEnabled = false,
-    fpsBoostEnabled = false,
-    antiAFKEnabled = true,
-    autoReconnectEnabled = false
+    antiAFKEnabled = true
 }
+
+-- State
+local flying = false
+local espObjects = {}
+
+-- ============================================
+-- FUNCTION DEFINITIONS (ALL BEFORE UI CREATION)
+-- ============================================
 
 -- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
@@ -54,32 +57,11 @@ TabBar.Position = UDim2.new(0, 0, 0, 30)
 TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 TabBar.Parent = MainFrame
 
--- Tab buttons
 local tabButtons = {}
 local tabNames = {"Main", "Movement", "Visual", "Utility", "Info"}
-local tabColors = {
-    ["Main"] = Color3.fromRGB(70, 70, 70),
-    ["Movement"] = Color3.fromRGB(50, 50, 50),
-    ["Visual"] = Color3.fromRGB(50, 50, 50),
-    ["Utility"] = Color3.fromRGB(50, 50, 50),
-    ["Info"] = Color3.fromRGB(50, 50, 50)
-}
-
-for i, name in ipairs(tabNames) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.2, 0, 1, 0)
-    btn.Position = UDim2.new((i - 1) * 0.2, 0, 0, 0)
-    btn.BackgroundColor3 = tabColors[name]
-    btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
-    btn.Parent = TabBar
-    tabButtons[name] = btn
-end
-
--- Tab frames
 local frames = {}
+
+-- Create frames first
 for _, name in ipairs(tabNames) do
     local frame = Instance.new("ScrollingFrame")
     frame.Size = UDim2.new(1, 0, 1, -65)
@@ -91,6 +73,20 @@ for _, name in ipairs(tabNames) do
     frame.Visible = (name == "Main")
     frame.Parent = MainFrame
     frames[name] = frame
+end
+
+-- Create tab buttons
+for i, name in ipairs(tabNames) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.2, 0, 1, 0)
+    btn.Position = UDim2.new((i - 1) * 0.2, 0, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.Parent = TabBar
+    tabButtons[name] = btn
 end
 
 -- Tab switching
@@ -126,7 +122,16 @@ end
 
 local function createToggle(parent, text, initial, callback)
     local value = initial
-    local button = createButton(parent, text .. ": " .. (value and "ON" or "OFF"), function()
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.9, 0, 0, 30)
+    button.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 35)
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    button.Text = text .. ": " .. (value and "ON" or "OFF")
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 14
+    button.Parent = parent
+    button.MouseButton1Click:Connect(function()
         value = not value
         button.Text = text .. ": " .. (value and "ON" or "OFF")
         callback(value)
@@ -178,7 +183,7 @@ local function createSlider(parent, text, min, max, default, callback)
     end)
 end
 
-local function createTextBox(parent, placeholder, executeText, scriptUrl)
+local function createTextBox(parent, placeholder, executeText)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0.9, 0, 0, 50)
     frame.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 55)
@@ -186,19 +191,18 @@ local function createTextBox(parent, placeholder, executeText, scriptUrl)
     frame.Parent = parent
 
     local textBox = Instance.new("TextBox")
-    textBox.Size = UDim2.new(0.8, 0, 0, 25)
-    textBox.Position = UDim2.new(0.1, 0, 0.1, 0)
+    textBox.Size = UDim2.new(0.7, 0, 0, 25)
+    textBox.Position = UDim2.new(0.05, 0, 0.1, 0)
     textBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     textBox.Font = Enum.Font.SourceSans
     textBox.TextSize = 14
     textBox.PlaceholderText = placeholder
-    textBox.Text = scriptUrl or ""
     textBox.Parent = frame
 
     local executeBtn = Instance.new("TextButton")
     executeBtn.Size = UDim2.new(0.2, 0, 0, 25)
-    executeBtn.Position = UDim2.new(0.6, 0, 0.1, 0)
+    executeBtn.Position = UDim2.new(0.75, 0, 0.1, 0)
     executeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     executeBtn.Text = executeText
     executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -224,12 +228,6 @@ local function createTextBox(parent, placeholder, executeText, scriptUrl)
 
     return {textBox = textBox, executeBtn = executeBtn}
 end
-
--- State
-local flying = false
-local dashing = false
-local spectating = false
-local spectatedPlayer = nil
 
 -- Fly function
 local function fly()
@@ -291,31 +289,47 @@ local function stopFly()
     end
 end
 
--- ESP system
-local espObjects = {}
-
+-- ESP functions
 local function createESP(player)
     if player == LocalPlayer then return end
     if espObjects[player] then return end
 
-    local esp = Instance.new("BillboardGui")
-    esp.Name = "ESP_" .. player.Name
-    esp.Size = UDim2.new(0, 200, 0, 50)
-    esp.AlwaysOnTop = true
-    esp.Adornee = player.Character and player.Character:FindFirstChild("Head") or nil
-    esp.Parent = player.Character
+    local function setupESP(char)
+        local head = char:FindFirstChild("Head")
+        if not head then return end
 
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = player.Name
-    textLabel.TextColor3 = settings.espColor
-    textLabel.TextStrokeTransparency = 0
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextSize = 16
-    textLabel.Parent = esp
+        local esp = Instance.new("BillboardGui")
+        esp.Name = "ESP_" .. player.Name
+        esp.Size = UDim2.new(0, 200, 0, 50)
+        esp.AlwaysOnTop = true
+        esp.Adornee = head
+        esp.Parent = char
 
-    espObjects[player] = esp
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = player.Name
+        textLabel.TextColor3 = settings.espColor
+        textLabel.TextStrokeTransparency = 0
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextSize = 16
+        textLabel.Parent = esp
+
+        espObjects[player] = esp
+    end
+
+    if player.Character then
+        setupESP(player.Character)
+    end
+
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        if espObjects[player] then
+            espObjects[player]:Destroy()
+            espObjects[player] = nil
+        end
+        setupESP(char)
+    end)
 end
 
 local function updateESP()
@@ -325,24 +339,52 @@ local function updateESP()
             espObjects[player] = nil
         else
             esp.Adornee = player.Character.Head
-            local distance = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.Head.Position).Magnitude) or math.huge
-            esp.TextLabel.Text = player.Name .. " [" .. math.floor(distance) .. "m]"
+            local distance = math.huge
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.Head.Position).Magnitude
+            end
+            local textLabel = esp:FindFirstChild("TextLabel")
+            if textLabel then
+                textLabel.Text = player.Name .. " [" .. math.floor(distance) .. "m]"
+            end
         end
     end
 end
+
+local function removeAllESP()
+    for player, esp in pairs(espObjects) do
+        esp:Destroy()
+        espObjects[player] = nil
+    end
+end
+
+-- Player added/removed connections
+Players.PlayerAdded:Connect(function(player)
+    if settings.espEnabled then
+        createESP(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if espObjects[player] then
+        espObjects[player]:Destroy()
+        espObjects[player] = nil
+    end
+end)
 
 -- Main loop
 RunService.RenderStepped:Connect(function()
     if flying then
         fly()
     end
-
     if settings.espEnabled then
         updateESP()
     end
 end)
 
--- Create UI elements (now after all functions are defined)
+-- ============================================
+-- UI ELEMENTS CREATION (ALL AFTER FUNCTIONS)
+-- ============================================
 
 -- MAIN TAB
 createToggle(frames["Main"], "ESP", settings.espEnabled, function(value)
@@ -352,18 +394,12 @@ createToggle(frames["Main"], "ESP", settings.espEnabled, function(value)
             createESP(player)
         end
     else
-        for _, esp in pairs(espObjects) do
-            esp:Destroy()
-        end
-        espObjects = {}
+        removeAllESP()
     end
 end)
 
 createButton(frames["Main"], "Refresh ESP", function()
-    for _, esp in pairs(espObjects) do
-        esp:Destroy()
-    end
-    espObjects = {}
+    removeAllESP()
     for _, player in ipairs(Players:GetPlayers()) do
         createESP(player)
     end
@@ -411,26 +447,12 @@ createToggle(frames["Visual"], "Fullbright", settings.fullbrightEnabled, functio
     end
 end)
 
-createButton(frames["Visual"], "FPS Boost", function()
-    settings.fpsBoostEnabled = not settings.fpsBoostEnabled
-    if settings.fpsBoostEnabled then
-        Lighting.GlobalShadows = false
-        settings.espEnabled = false
-        for _, esp in pairs(espObjects) do
-            esp:Destroy()
-        end
-        espObjects = {}
-    else
-        Lighting.GlobalShadows = true
-    end
-end)
-
 -- UTILITY TAB
 createToggle(frames["Utility"], "Anti-AFK", settings.antiAFKEnabled, function(value)
     settings.antiAFKEnabled = value
     if value then
-        game:GetService("VirtualUser"):CaptureController()
-        game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0))
+        VirtualUser:CaptureController()
+        VirtualUser:Button1Down(Vector2.new(0, 0))
     end
 end)
 
@@ -451,6 +473,8 @@ createButton(frames["Utility"], "Teleport to Nearest", function()
     end
 end)
 
+createTextBox(frames["Utility"], "Enter script URL...", "Load")
+
 -- INFO TAB
 local function createInfoLabel(parent, text)
     local label = Instance.new("TextLabel")
@@ -470,7 +494,7 @@ local userId = LocalPlayer.UserId
 local userName = LocalPlayer.Name
 local displayName = LocalPlayer.DisplayName
 local accountAge = LocalPlayer.AccountAge
-local dateCreated = os.date("%Y-%m-%d", os.time() - (accountAge * 86400)) -- Approximate
+local dateCreated = os.date("%Y-%m-%d", os.time() - (accountAge * 86400))
 
 createInfoLabel(frames["Info"], "Script: Delta Ultimate v5.1")
 createInfoLabel(frames["Info"], "Version: 5.1")
@@ -486,9 +510,6 @@ createInfoLabel(frames["Info"], "Job ID: " .. game.JobId)
 createInfoLabel(frames["Info"], "Creator: Glitchederror0724")
 createInfoLabel(frames["Info"], "Created: 2024")
 createInfoLabel(frames["Info"], "Status: Loaded Successfully")
-
--- Script URL loader
-createTextBox(frames["Utility"], "Enter script URL...", "Load", "https://raw.githubusercontent.com/Glitchederror0724/Hack/refs/heads/main/Greatest_UI")
 
 print("Delta Ultimate v5.1 loaded successfully!")
 print("Welcome, " .. userName .. "!")
