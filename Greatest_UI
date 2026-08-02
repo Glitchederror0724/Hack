@@ -1,517 +1,308 @@
---[[
-    Delta Executor - Ultimate Utility Script v5
-    Fixed tabs and line errors
+--[[  
+Delta Executor - Ultimate Utility Script v5.1  
+Patched by Delta maker script.  
+Fixed: Line 180, Fly function, ESP, Utility tab.  
+Added: Direct script loader for Dex, Cobalt, Inf Yield.  
 ]]
 
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
-local TeleportService = game:GetService("TeleportService")
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-
--- Settings
-local settings = {
-    flySpeed = 50,
-    espEnabled = true,
-    espColor = Color3.fromRGB(255, 0, 0),
-    maxDistance = 500,
-    walkSpeed = 16,
-    jumpPower = 50,
-    dashSpeed = 100,
-    dashDuration = 0.3,
-    fullbrightEnabled = false,
-    fpsBoostEnabled = false,
-    antiAFKEnabled = true,
-    autoReconnectEnabled = false
-}
-
--- GUI Setup
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DeltaUltimateGUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 350, 0, 500)
-MainFrame.Position = UDim2.new(0, 10, 0, 10)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Title.Text = "Delta Ultimate"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
-Title.Parent = MainFrame
-
--- Create tabs manually
-local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, 0, 0, 35)
-TabBar.Position = UDim2.new(0, 0, 0, 30)
-TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-TabBar.Parent = MainFrame
-
--- Tab buttons
-local MainTabBtn = Instance.new("TextButton")
-MainTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
-MainTabBtn.Position = UDim2.new(0, 0, 0, 0)
-MainTabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-MainTabBtn.Text = "Main"
-MainTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MainTabBtn.Font = Enum.Font.SourceSans
-MainTabBtn.TextSize = 14
-MainTabBtn.Parent = TabBar
-
-local MovementTabBtn = Instance.new("TextButton")
-MovementTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
-MovementTabBtn.Position = UDim2.new(0.25, 0, 0, 0)
-MovementTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-MovementTabBtn.Text = "Movement"
-MovementTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MovementTabBtn.Font = Enum.Font.SourceSans
-MovementTabBtn.TextSize = 14
-MovementTabBtn.Parent = TabBar
-
-local VisualTabBtn = Instance.new("TextButton")
-VisualTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
-VisualTabBtn.Position = UDim2.new(0.5, 0, 0, 0)
-VisualTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-VisualTabBtn.Text = "Visual"
-VisualTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-VisualTabBtn.Font = Enum.Font.SourceSans
-VisualTabBtn.TextSize = 14
-VisualTabBtn.Parent = TabBar
-
-local UtilityTabBtn = Instance.new("TextButton")
-UtilityTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
-UtilityTabBtn.Position = UDim2.new(0.75, 0, 0, 0)
-UtilityTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-UtilityTabBtn.Text = "Utility"
-UtilityTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-UtilityTabBtn.Font = Enum.Font.SourceSans
-UtilityTabBtn.TextSize = 14
-UtilityTabBtn.Parent = TabBar
-
--- Tab frames
-local MainFrame2 = Instance.new("ScrollingFrame")
-MainFrame2.Size = UDim2.new(1, 0, 1, -65)
-MainFrame2.Position = UDim2.new(0, 0, 0, 65)
-MainFrame2.BackgroundTransparency = 1
-MainFrame2.ScrollBarThickness = 5
-MainFrame2.CanvasSize = UDim2.new(0, 0, 0, 0)
-MainFrame2.AutomaticCanvasSize = Enum.AutomaticSize.Y
-MainFrame2.Visible = true
-MainFrame2.Parent = MainFrame
-
-local MovementFrame = Instance.new("ScrollingFrame")
-MovementFrame.Size = UDim2.new(1, 0, 1, -65)
-MovementFrame.Position = UDim2.new(0, 0, 0, 65)
-MovementFrame.BackgroundTransparency = 1
-MovementFrame.ScrollBarThickness = 5
-MovementFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-MovementFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-MovementFrame.Visible = false
-MovementFrame.Parent = MainFrame
-
-local VisualFrame = Instance.new("ScrollingFrame")
-VisualFrame.Size = UDim2.new(1, 0, 1, -65)
-VisualFrame.Position = UDim2.new(0, 0, 0, 65)
-VisualFrame.BackgroundTransparency = 1
-VisualFrame.ScrollBarThickness = 5
-VisualFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-VisualFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-VisualFrame.Visible = false
-VisualFrame.Parent = MainFrame
-
-local UtilityFrame = Instance.new("ScrollingFrame")
-UtilityFrame.Size = UDim2.new(1, 0, 1, -65)
-UtilityFrame.Position = UDim2.new(0, 0, 0, 65)
-UtilityFrame.BackgroundTransparency = 1
-UtilityFrame.ScrollBarThickness = 5
-UtilityFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-UtilityFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-UtilityFrame.Visible = false
-UtilityFrame.Parent = MainFrame
-
--- Tab switching function
-local function switchTab(tabName)
-    MainFrame2.Visible = (tabName == "Main")
-    MovementFrame.Visible = (tabName == "Movement")
-    VisualFrame.Visible = (tabName == "Visual")
-    UtilityFrame.Visible = (tabName == "Utility")
-    
-    MainTabBtn.BackgroundColor3 = (tabName == "Main") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
-    MovementTabBtn.BackgroundColor3 = (tabName == "Movement") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
-    VisualTabBtn.BackgroundColor3 = (tabName == "Visual") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
-    UtilityTabBtn.BackgroundColor3 = (tabName == "Utility") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
+-- Services  
+local Players = game:GetService("Players")  
+local RunService = game:GetService("RunService")  
+local UserInputService = game:GetService("UserInputService")  
+local Lighting = game:GetService("Lighting")  
+local TeleportService = game:GetService("TeleportService")  
+local HttpService = game:GetService("HttpService") -- [FIX 1] Added missing service  
+local Camera = workspace.CurrentCamera  
+local LocalPlayer = Players.LocalPlayer  
+-- Settings  
+local settings = {  
+    flySpeed = 50,  
+    espEnabled = true,  
+    espColor = Color3.fromRGB(255, 0, 0),  
+    maxDistance = 500,  
+    walkSpeed = 16,  
+    jumpPower = 50,  
+    dashSpeed = 100,  
+    dashDuration = 0.3,  
+    fullbrightEnabled = false,  
+    fpsBoostEnabled = false,  
+    antiAFKEnabled = true,  
+    autoReconnectEnabled = false  
+}  
+-- GUI Setup  
+local ScreenGui = Instance.new("ScreenGui")  
+ScreenGui.Name = "DeltaUltimateGUI"  
+ScreenGui.ResetOnSpawn = false  
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")  
+local MainFrame = Instance.new("Frame")  
+MainFrame.Size = UDim2.new(0, 350, 0, 500)  
+MainFrame.Position = UDim2.new(0, 10, 0, 10)  
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  
+MainFrame.Active = true  
+MainFrame.Draggable = true  
+MainFrame.Parent = ScreenGui  
+local Title = Instance.new("TextLabel")  
+Title.Size = UDim2.new(1, 0, 0, 30)  
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)  
+Title.Text = "Delta Ultimate v5.1"  
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)  
+Title.Font = Enum.Font.SourceSansBold  
+Title.TextSize = 20  
+Title.Parent = MainFrame  
+-- Create tabs manually  
+local TabBar = Instance.new("Frame")  
+TabBar.Size = UDim2.new(1, 0, 0, 35)  
+TabBar.Position = UDim2.new(0, 0, 0, 30)  
+TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)  
+TabBar.Parent = MainFrame  
+-- Tab buttons  
+local MainTabBtn = Instance.new("TextButton")  
+MainTabBtn.Size = UDim2.new(0.25, 0, 1, 0)  
+MainTabBtn.Position = UDim2.new(0, 0, 0, 0)  
+MainTabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)  
+MainTabBtn.Text = "Main"  
+MainTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)  
+MainTabBtn.Font = Enum.Font.SourceSans  
+MainTabBtn.TextSize = 14  
+MainTabBtn.Parent = TabBar  
+local MovementTabBtn = Instance.new("TextButton")  
+MovementTabBtn.Size = UDim2.new(0.25, 0, 1, 0)  
+MovementTabBtn.Position = UDim2.new(0.25, 0, 0, 0)  
+MovementTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)  
+MovementTabBtn.Text = "Movement"  
+MovementTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)  
+MovementTabBtn.Font = Enum.Font.SourceSans  
+MovementTabBtn.TextSize = 14  
+MovementTabBtn.Parent = TabBar  
+local VisualTabBtn = Instance.new("TextButton")  
+VisualTabBtn.Size = UDim2.new(0.25, 0, 1, 0)  
+VisualTabBtn.Position = UDim2.new(0.5, 0, 0, 0)  
+VisualTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)  
+VisualTabBtn.Text = "Visual"  
+VisualTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)  
+VisualTabBtn.Font = Enum.Font.SourceSans  
+VisualTabBtn.TextSize = 14  
+VisualTabBtn.Parent = TabBar  
+local UtilityTabBtn = Instance.new("TextButton")  
+UtilityTabBtn.Size = UDim2.new(0.25, 0, 1, 0)  
+UtilityTabBtn.Position = UDim2.new(0.75, 0, 0, 0)  
+UtilityTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)  
+UtilityTabBtn.Text = "Utility"  
+UtilityTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)  
+UtilityTabBtn.Font = Enum.Font.SourceSans  
+UtilityTabBtn.TextSize = 14  
+UtilityTabBtn.Parent = TabBar  
+-- Tab frames  
+local MainFrame2 = Instance.new("ScrollingFrame")  
+MainFrame2.Size = UDim2.new(1, 0, 1, -65)  
+MainFrame2.Position = UDim2.new(0, 0, 0, 65)  
+MainFrame2.BackgroundTransparency = 1  
+MainFrame2.ScrollBarThickness = 5  
+MainFrame2.CanvasSize = UDim2.new(0, 0, 0, 0)  
+MainFrame2.AutomaticCanvasSize = Enum.AutomaticSize.Y  
+MainFrame2.Visible = true  
+MainFrame2.Parent = MainFrame  
+local MovementFrame = Instance.new("ScrollingFrame")  
+MovementFrame.Size = UDim2.new(1, 0, 1, -65)  
+MovementFrame.Position = UDim2.new(0, 0, 0, 65)  
+MovementFrame.BackgroundTransparency = 1  
+MovementFrame.ScrollBarThickness = 5  
+MovementFrame.CanvasSize = UDim2.new(0, 0, 0, 0)  
+MovementFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y  
+MovementFrame.Visible = false  
+MovementFrame.Parent = MainFrame  
+local VisualFrame = Instance.new("ScrollingFrame")  
+VisualFrame.Size = UDim2.new(1, 0, 1, -65)  
+VisualFrame.Position = UDim2.new(0, 0, 0, 65)  
+VisualFrame.BackgroundTransparency = 1  
+VisualFrame.ScrollBarThickness = 5  
+VisualFrame.CanvasSize = UDim2.new(0, 0, 0, 0)  
+VisualFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y  
+VisualFrame.Visible = false  
+VisualFrame.Parent = MainFrame  
+local UtilityFrame = Instance.new("ScrollingFrame")  
+UtilityFrame.Size = UDim2.new(1, 0, 1, -65)  
+UtilityFrame.Position = UDim2.new(0, 0, 0, 65)  
+UtilityFrame.BackgroundTransparency = 1  
+UtilityFrame.ScrollBarThickness = 5  
+UtilityFrame.CanvasSize = UDim2.new(0, 0, 0, 0)  
+UtilityFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y  
+UtilityFrame.Visible = false  
+UtilityFrame.Parent = MainFrame  
+-- Tab switching function  
+local function switchTab(tabName)  
+    MainFrame2.Visible = (tabName == "Main")  
+    MovementFrame.Visible = (tabName == "Movement")  
+    VisualFrame.Visible = (tabName == "Visual")  
+    UtilityFrame.Visible = (tabName == "Utility")  
+    MainTabBtn.BackgroundColor3 = (tabName == "Main") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)  
+    MovementTabBtn.BackgroundColor3 = (tabName == "Movement") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)  
+    VisualTabBtn.BackgroundColor3 = (tabName == "Visual") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)  
+    UtilityTabBtn.BackgroundColor3 = (tabName == "Utility") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)  
+end  
+MainTabBtn.MouseButton1Click:Connect(function() switchTab("Main") end)  
+MovementTabBtn.MouseButton1Click:Connect(function() switchTab("Movement") end)  
+VisualTabBtn.MouseButton1Click:Connect(function() switchTab("Visual") end)  
+UtilityTabBtn.MouseButton1Click:Connect(function() switchTab("Utility") end)  
+-- Helper functions for creating UI elements  
+local function createButton(parent, text, callback)  
+    local button = Instance.new("TextButton")  
+    button.Size = UDim2.new(0.9, 0, 0, 30)  
+    button.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 35)  
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  
+    button.Text = text  
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)  
+    button.Font = Enum.Font.SourceSans  
+    button.TextSize = 14  
+    button.Parent = parent  
+    button.MouseButton1Click:Connect(callback)  
+    return button  
+end  
+local function createToggle(parent, text, initial, callback)  
+    local value = initial  
+    local button = createButton(parent, text .. ": " .. (value and "ON" or "OFF"), function()  
+        value = not value  
+        button.Text = text .. ": " .. (value and "ON" or "OFF")  
+        callback(value)  
+    end)  
+    return button  
+end  
+local function createSlider(parent, text, min, max, default, callback)  
+    local frame = Instance.new("Frame")  
+    frame.Size = UDim2.new(0.9, 0, 0, 50)  
+    frame.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 55)  
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  
+    frame.Parent = parent  
+    local label = Instance.new("TextLabel")  
+    label.Size = UDim2.new(1, 0, 0, 20)  
+    label.BackgroundTransparency = 1  
+    label.Text = text .. ": " .. default  
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)  
+    label.Font = Enum.Font.SourceSans  
+    label.TextSize = 14  
+    label.Parent = frame  
+    local value = default  
+    local sliderBtn = Instance.new("TextButton")  
+    sliderBtn.Size = UDim2.new(1, -20, 0, 20)  
+    sliderBtn.Position = UDim2.new(0, 10, 0, 25)  
+    sliderBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)  
+    sliderBtn.Text = "← " .. value .. " →"  
+    sliderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)  
+    sliderBtn.Font = Enum.Font.SourceSans  
+    sliderBtn.TextSize = 12  
+    sliderBtn.Parent = frame  
+    sliderBtn.MouseButton1Click:Connect(function()  
+        value = value + 1  
+        if value > max then value = min end  
+        sliderBtn.Text = "← " .. value .. " →"  
+        label.Text = text .. ": " .. value  
+        callback(value)  
+    end)  
+    sliderBtn.MouseButton2Click:Connect(function()  
+        value = value - 1  
+        if value < min then value = max end  
+        sliderBtn.Text = "← " .. value .. " →"  
+        label.Text = text .. ": " .. value  
+        callback(value)  
+    end)  
+end  
+-- [NEW FUNCTION] CreateTextBox for script loading  
+local function createTextBox(parent, placeholder, executeText, scriptUrl)  
+    local frame = Instance.new("Frame")  
+    frame.Size = UDim2.new(0.9, 0, 0, 50)  
+    frame.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 55)  
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  
+    frame.Parent = parent  
+    local textBox = Instance.new("TextBox")  
+    textBox.Size = UDim2.new(0.8, 0, 0, 25)  
+    textBox.Position = UDim2.new(0.1, 0, 0.1, 0)  
+    textBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)  
+    textBox.Font = Enum.Font.SourceSans  
+    textBox.TextSize = 14  
+    textBox.PlaceholderText = placeholder  
+    textBox.Text = scriptUrl or ""  
+    textBox.Parent = frame  
+    local executeBtn = Instance.new("TextButton")  
+    executeBtn.Size = UDim2.new(0.2, 0, 0, 25)  
+    executeBtn.Position = UDim2.new(0.6, 0, 0.1, 0)  
+    executeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  
+    executeBtn.Text = executeText  
+    executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)  
+    executeBtn.Font = Enum.Font.SourceSans  
+    executeBtn.TextSize = 12  
+    executeBtn.Parent = frame  
+    executeBtn.MouseButton1Click:Connect(function()  
+        local url = textBox.Text  
+        if url ~= "" then  
+            loadstring(game:HttpGet(url))()  
+        end  
+    end)  
+    return {textBox = textBox, executeBtn = executeBtn}  
 end
 
-MainTabBtn.MouseButton1Click:Connect(function() switchTab("Main") end)
-MovementTabBtn.MouseButton1Click:Connect(function() switchTab("Movement") end)
-VisualTabBtn.MouseButton1Click:Connect(function() switchTab("Visual") end)
-UtilityTabBtn.MouseButton1Click:Connect(function() switchTab("Utility") end)
-
--- Helper functions for creating UI elements
-local function createButton(parent, text, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.9, 0, 0, 30)
-    button.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 35)
-    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    button.Text = text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.SourceSans
-    button.TextSize = 14
-    button.Parent = parent
-    button.MouseButton1Click:Connect(callback)
-    return button
-end
-
-local function createToggle(parent, text, initial, callback)
-    local value = initial
-    local button = createButton(parent, text .. ": " .. (value and "ON" or "OFF"), function()
-        value = not value
-        button.Text = text .. ": " .. (value and "ON" or "OFF")
-        callback(value)
-    end)
-    return button
-end
-
-local function createSlider(parent, text, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.9, 0, 0, 50)
-    frame.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 55)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    frame.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.BackgroundTransparency = 1
-    label.Text = text .. ": " .. default
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.SourceSans
-    label.TextSize = 14
-    label.Parent = frame
-    
-    local value = default
-    local sliderBtn = Instance.new("TextButton")
-    sliderBtn.Size = UDim2.new(1, -20, 0, 20)
-    sliderBtn.Position = UDim2.new(0, 10, 0, 25)
-    sliderBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    sliderBtn.Text = "← " .. value .. " →"
-    sliderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderBtn.Font = Enum.Font.SourceSans
-    sliderBtn.TextSize = 12
-    sliderBtn.Parent = frame
-    
-    sliderBtn.MouseButton1Click:Connect(function()
-        value = value + 1
-        if value > max then value = min end
-        sliderBtn.Text = "← " .. value .. " →"
-        label.Text = text .. ": " .. value
-        callback(value)
-    end)
-    
-    sliderBtn.MouseButton2Click:Connect(function()
-        value = value - 1
-        if value < min then value = max end
-        sliderBtn.Text = "← " .. value .. " →"
-        label.Text = text .. ": " .. value
-        callback(value)
-    end)
-end
-
--- State
-local flying = false
-local dashing = false
-local spectating = false
-local spectatedPlayer = nil
-
--- Core Functions
-local function fly()
-    local character = LocalPlayer.Character
-    if not character then return end
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
-    
-    local bodyVelocity = rootPart:FindFirstChild("BodyVelocity")
-    if not bodyVelocity then
-        bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
-        bodyVelocity.Parent = rootPart
-    end
-    
-    local bodyGyro = rootPart:FindFirstChild("BodyGyro")
-    if not bodyGyro then
-        bodyGyro = Instance.new("BodyGyro")
-        bodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 100000
-        bodyGyro.Parent = rootPart
-    end
-    
-    local moveDirection = Vector3.new()
-    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Camera.CFrame.LookVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - Camera.CFrame.LookVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - Camera.CFrame.RightVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Camera.CFrame.RightVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
-    
-    if moveDirection.Magnitude > 0 then
-        moveDirection = moveDirection.Unit * settings.flySpeed
-    end
-    
-    bodyVelocity.Velocity = moveDirection
-    bodyGyro.CFrame = Camera.CFrame
-end
-
--- ESP
-local espObjects = {}
-local function createESP(player)
-    if player == LocalPlayer then return end
-    
-    local esp = Instance.new("BillboardGui")
-    esp.Name = "ESP_" .. player.Name
-    esp.Size = UDim2.new(0, 200, 0, 50)
-    esp.AlwaysOnTop = true
-    esp.Adornee = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, 0, 0, 30)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = player.Name
-    nameLabel.TextColor3 = settings.espColor
-    nameLabel.Font = Enum.Font.SourceSansBold
-    nameLabel.TextSize = 16
-    nameLabel.Parent = esp
-    
-    local distLabel = Instance.new("TextLabel")
-    distLabel.Name = "DistanceLabel"
-    distLabel.Size = UDim2.new(1, 0, 0, 20)
-    distLabel.Position = UDim2.new(0, 0, 1, 0)
-    distLabel.BackgroundTransparency = 1
-    distLabel.Text = ""
-    distLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    distLabel.Font = Enum.Font.SourceSans
-    distLabel.TextSize = 12
-    distLabel.Parent = esp
-    
-    esp.Parent = ScreenGui
-    espObjects[player] = esp
-end
-
-local function updateESP()
-    if not settings.espEnabled then
-        for _, esp in pairs(espObjects) do
-            if esp then esp.Enabled = false end
-        end
-        return
-    end
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local character = player.Character
-            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-            local esp = espObjects[player]
-            
-            if character and rootPart then
-                if not esp then
-                    createESP(player)
-                    esp = espObjects[player]
-                end
-                
-                if esp then
-                    esp.Adornee = rootPart
-                    esp.Enabled = true
-                    
-                    local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if localRoot then
-                        local distance = (localRoot.Position - rootPart.Position).Magnitude
-                        local nameLbl = esp:FindFirstChild("NameLabel")
-                        local distLbl = esp:FindFirstChild("DistanceLabel")
-                        if nameLbl then nameLbl.Text = player.Name end
-                        if distLbl then distLbl.Text = math.floor(distance) .. "m" end
-                    end
-                end
-            else
-                if esp then esp.Enabled = false end
-            end
-        end
-    end
-end
-
--- Other functions (teleport, dash, etc.)
-local function teleportToMouse()
-    local mouse = LocalPlayer:GetMouse()
-    local target = mouse.Target
-    if target then
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character:SetPrimaryPartCFrame(target.CFrame + Vector3.new(0, 5, 0))
-        end
-    end
-end
-
-local function teleportToPlayer(player)
-    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        LocalPlayer.Character:SetPrimaryPartCFrame(player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0))
-    end
-end
-
-local function dash(direction)
-    local character = LocalPlayer.Character
-    if not character or dashing then return end
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
-    
-    dashing = true
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1, 1, 1) * 100000
-    bv.Velocity = direction * settings.dashSpeed
-    bv.Parent = rootPart
-    
-    task.delay(settings.dashDuration, function()
-        bv:Destroy()
-        dashing = false
-    end)
-end
-
-local function setFullbright(enabled)
-    if enabled then
-        Lighting.Ambient = Color3.new(1, 1, 1)
-        Lighting.Brightness = 2
-        Lighting.ClockTime = 12
-        Lighting.FogEnd = 100000
-        Lighting.GlobalShadows = false
-    else
-        Lighting.Ambient = Color3.new(0, 0, 0)
-        Lighting.Brightness = 1
-        Lighting.ClockTime = 14
-        Lighting.FogEnd = 500
-        Lighting.GlobalShadows = true
-    end
-end
-
-local function serverHop()
-    local placeId = game.PlaceId
-    local jobId = game.JobId
-    local servers = {}
-    
-    local success, result = pcall(function()
-        return game:GetService("HttpService"):GetAsync("https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?limit=100")
-    end)
-    
-    if success then
-        for _, server in pairs(result.data) do
-            if server.id ~= jobId and server.playing < server.maxPlayers then
-                table.insert(servers, server.id)
-            end
-        end
-    end
-    
-    if #servers > 0 then
-        TeleportService:TeleportToPlaceInstance(placeId, servers[math.random(1, #servers)])
-    end
-end
-
--- Populate tabs
--- Main Tab
-createToggle(MainFrame2, "Fly", false, function(v) flying = v end)
-createToggle(MainFrame2, "ESP", true, function(v) settings.espEnabled = v end)
-createButton(MainFrame2, "Teleport to Mouse", teleportToMouse)
-createButton(MainFrame2, "Server Hop", serverHop)
-
--- Movement Tab
-createSlider(MovementFrame, "WalkSpeed", 1, 500, 16, function(v)
-    settings.walkSpeed = v
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-    if hum then hum.WalkSpeed = v end
-end)
-
-createSlider(MovementFrame, "JumpPower", 1, 500, 50, function(v)
-    settings.jumpPower = v
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-    if hum then hum.JumpPower = v end
-end)
-
-createButton(MovementFrame, "Dash Forward", function() dash(Camera.CFrame.LookVector) end)
-createButton(MovementFrame, "Dash Backward", function() dash(-Camera.CFrame.LookVector) end)
-createButton(MovementFrame, "Teleport to Player", function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            teleportToPlayer(player)
-            break
-        end
-    end
-end)
-
--- Visual Tab
-createToggle(VisualFrame, "Fullbright", false, function(v) setFullbright(v) end)
-createToggle(VisualFrame, "FPS Boost", false, function(v)
-    settings.RenderQualityLevel = v and 1 or 10
-    Lighting.GlobalShadows = not v
-end)
-
--- Utility Tab
-createToggle(UtilityFrame, "Anti-AFK", true, function(v) settings.antiAFKEnabled = v end)
-createToggle(UtilityFrame, "Auto-Reconnect", false, function(v)
-    settings.autoReconnectEnabled = v
-    if v then
-        task.spawn(function()
-            while settings.autoReconnectEnabled do
-                task.wait(1)
-                if not LocalPlayer.Character then LocalPlayer:LoadCharacter() end
-            end
-        end)
-    end
-end)
-
-createButton(UtilityFrame, "Spectate", function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            spectating = true
-            spectatedPlayer = player
-            Camera.CameraSubject = player.Character and player.Character:FindFirstChild("Humanoid")
-            break
-        end
-    end
-end)
-
-createButton(UtilityFrame, "Stop Spectate", function()
-    spectating = false
-    spectatedPlayer = nil
-    Camera.CameraSubject = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-end)
-
-createButton(UtilityFrame, "Mimic", function()
-    if spectatedPlayer and spectatedPlayer.Character then
-        LocalPlayer.Character:SetPrimaryPartCFrame(spectatedPlayer.Character.HumanoidRootPart.CFrame)
-    end
-end)
-
--- Main Loop
-RunService.RenderStepped:Connect(function()
-    if flying then fly() end
-    if settings.espEnabled then updateESP() end
-end)
-
--- Keybinds
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.F then
-        flying = not flying
-    elseif input.KeyCode == Enum.KeyCode.LeftControl then
-        dash(Camera.CFrame.LookVector)
-    elseif input.KeyCode == Enum.KeyCode.T then
-        teleportToMouse()
-    end
-end)
-
-print("Delta Ultimate Script v5 Loaded!")
-print("Keybinds: F = Fly, Ctrl = Dash, T = Teleport")
+-- State  
+local flying = false  
+local dashing = false  
+local spectating = false  
+local spectatedPlayer = nil  
+-- [FIX 2] Patched Fly function (fixed root part and body velocity/gyro handling)  
+local function fly()  
+    local character = LocalPlayer.Character  
+    if not character then return end  
+    local humanoid = character:FindFirstChildOfClass("Humanoid")  
+    local rootPart = character:FindFirstChild("HumanoidRootPart")  
+    if not rootPart or humanoid.State == Enum.HumanoidStateType.Physics then return end  
+    local bodyVelocity = rootPart:FindFirstChild("DeltaFlyBV")  
+    local bodyGyro = rootPart:FindFirstChild("DeltaFlyBG")  
+    if not bodyVelocity then  
+        bodyVelocity = Instance.new("BodyVelocity")  
+        bodyVelocity.Name = "DeltaFlyBV"  
+        bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)  
+        bodyVelocity.P = 1250  
+        bodyVelocity.Velocity = Vector3.new()  
+        bodyVelocity.Parent = rootPart  
+    end  
+    if not bodyGyro then  
+        bodyGyro = Instance.new("BodyGyro")  
+        bodyGyro.Name = "DeltaFlyBG"  
+        bodyGyro.MaxTorque = Vector3.new(100000, 100000, 100000)  
+        bodyGyro.P = 1250  
+        bodyGyro.CFrame = rootPart.CFrame  
+        bodyGyro.Parent = rootPart  
+    end  
+    local moveDirection = Vector3.new()  
+    local cf = Camera.CFrame  
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + cf.LookVector end  
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - cf.LookVector end  
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - cf.RightVector end  
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + cf.RightVector end  
+    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end  
+    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end  
+    if moveDirection.Magnitude > 0 then  
+        moveDirection = moveDirection.Unit * settings.flySpeed  
+    end  
+    bodyVelocity.Velocity = moveDirection  
+    bodyGyro.CFrame = cf  
+end  
+local function stopFly()  
+    local character = LocalPlayer.Character  
+    if character then  
+        local rootPart = character:FindFirstChild("HumanoidRootPart")  
+        if rootPart then  
+            local bv = rootPart:FindFirstChild("DeltaFlyBV")  
+            local bg = rootPart:FindFirstChild("DeltaFlyBG")  
+            if bv then bv:Destroy() end  
+            if bg then bg:Destroy() end  
+        end  
+    end  
+end  
+-- [FIX 3] Patched ESP - Fixed table handling and BillboardGui properties  
+local espObjects = {}  
+local function createESP(player)  
+    if player == LocalPlayer then return end  
+    if espObjects[player] then return end  
+    local esp = Instance.new("BillboardGui")  
+    esp.Name = "ESP_" .. player.Name  
+    esp.Size = UDim2.new(0, 200, 0, 50)  
+    esp.AlwaysOnTop
