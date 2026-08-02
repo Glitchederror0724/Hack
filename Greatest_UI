@@ -1,11 +1,18 @@
 --[[
-    Delta Executor - Ultimate Utility Script v4
-    Features: Fly, ESP, TP, WalkSpeed, JumpPower, Dash, Fullbright, FPS Boost,
-    Server Hop, Anti-AFK, Auto-Reconnect, Spectate & Mimic, Search, Dex,
-    Inf Yield, Cobalt, and more
+    Delta Executor - Ultimate Utility Script v5
+    Fixed tabs and line errors
 ]]
 
--- Configuration
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- Settings
 local settings = {
     flySpeed = 50,
     espEnabled = true,
@@ -18,36 +25,23 @@ local settings = {
     fullbrightEnabled = false,
     fpsBoostEnabled = false,
     antiAFKEnabled = true,
-    autoReconnectEnabled = false,
-    spectateEnabled = false
+    autoReconnectEnabled = false
 }
 
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
-local TeleportService = game:GetService("TeleportService")
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-
--- GUI
+-- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DeltaUltimateGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 350, 0, 500)
 MainFrame.Position = UDim2.new(0, 10, 0, 10)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.BackgroundTransparency = 0.1
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- Title
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
@@ -57,179 +51,210 @@ Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 20
 Title.Parent = MainFrame
 
--- Tab Bar
+-- Create tabs manually
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(1, 0, 0, 35)
 TabBar.Position = UDim2.new(0, 0, 0, 30)
 TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 TabBar.Parent = MainFrame
 
--- Tab Definitions
-local tabDefinitions = {
-    {Name = "Main", Color = Color3.fromRGB(70, 70, 70)},
-    {Name = "Movement", Color = Color3.fromRGB(50, 50, 50)},
-    {Name = "Visual", Color = Color3.fromRGB(50, 50, 50)},
-    {Name = "Utility", Color = Color3.fromRGB(50, 50, 50)}
-}
+-- Tab buttons
+local MainTabBtn = Instance.new("TextButton")
+MainTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
+MainTabBtn.Position = UDim2.new(0, 0, 0, 0)
+MainTabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+MainTabBtn.Text = "Main"
+MainTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainTabBtn.Font = Enum.Font.SourceSans
+MainTabBtn.TextSize = 14
+MainTabBtn.Parent = TabBar
 
--- Create Tab Buttons and Frames
-local tabButtons = {}
-local tabFrames = {}
-local currentTab = "Main"
+local MovementTabBtn = Instance.new("TextButton")
+MovementTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
+MovementTabBtn.Position = UDim2.new(0.25, 0, 0, 0)
+MovementTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+MovementTabBtn.Text = "Movement"
+MovementTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MovementTabBtn.Font = Enum.Font.SourceSans
+MovementTabBtn.TextSize = 14
+MovementTabBtn.Parent = TabBar
 
-for i, tabDef in ipairs(tabDefinitions) do
-    -- Create tab button
-    local tabButton = Instance.new("TextButton")
-    tabButton.Size = UDim2.new(0.25, 0, 1, 0)
-    tabButton.Position = UDim2.new((i - 1) * 0.25, 0, 0, 0)
-    tabButton.BackgroundColor3 = tabDef.Color
-    tabButton.Text = tabDef.Name
-    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    tabButton.Font = Enum.Font.SourceSans
-    tabButton.TextSize = 14
-    tabButton.Parent = TabBar
-    tabButtons[tabDef.Name] = tabButton
+local VisualTabBtn = Instance.new("TextButton")
+VisualTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
+VisualTabBtn.Position = UDim2.new(0.5, 0, 0, 0)
+VisualTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+VisualTabBtn.Text = "Visual"
+VisualTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+VisualTabBtn.Font = Enum.Font.SourceSans
+VisualTabBtn.TextSize = 14
+VisualTabBtn.Parent = TabBar
+
+local UtilityTabBtn = Instance.new("TextButton")
+UtilityTabBtn.Size = UDim2.new(0.25, 0, 1, 0)
+UtilityTabBtn.Position = UDim2.new(0.75, 0, 0, 0)
+UtilityTabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+UtilityTabBtn.Text = "Utility"
+UtilityTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+UtilityTabBtn.Font = Enum.Font.SourceSans
+UtilityTabBtn.TextSize = 14
+UtilityTabBtn.Parent = TabBar
+
+-- Tab frames
+local MainFrame2 = Instance.new("ScrollingFrame")
+MainFrame2.Size = UDim2.new(1, 0, 1, -65)
+MainFrame2.Position = UDim2.new(0, 0, 0, 65)
+MainFrame2.BackgroundTransparency = 1
+MainFrame2.ScrollBarThickness = 5
+MainFrame2.CanvasSize = UDim2.new(0, 0, 0, 0)
+MainFrame2.AutomaticCanvasSize = Enum.AutomaticSize.Y
+MainFrame2.Visible = true
+MainFrame2.Parent = MainFrame
+
+local MovementFrame = Instance.new("ScrollingFrame")
+MovementFrame.Size = UDim2.new(1, 0, 1, -65)
+MovementFrame.Position = UDim2.new(0, 0, 0, 65)
+MovementFrame.BackgroundTransparency = 1
+MovementFrame.ScrollBarThickness = 5
+MovementFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+MovementFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+MovementFrame.Visible = false
+MovementFrame.Parent = MainFrame
+
+local VisualFrame = Instance.new("ScrollingFrame")
+VisualFrame.Size = UDim2.new(1, 0, 1, -65)
+VisualFrame.Position = UDim2.new(0, 0, 0, 65)
+VisualFrame.BackgroundTransparency = 1
+VisualFrame.ScrollBarThickness = 5
+VisualFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+VisualFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+VisualFrame.Visible = false
+VisualFrame.Parent = MainFrame
+
+local UtilityFrame = Instance.new("ScrollingFrame")
+UtilityFrame.Size = UDim2.new(1, 0, 1, -65)
+UtilityFrame.Position = UDim2.new(0, 0, 0, 65)
+UtilityFrame.BackgroundTransparency = 1
+UtilityFrame.ScrollBarThickness = 5
+UtilityFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+UtilityFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+UtilityFrame.Visible = false
+UtilityFrame.Parent = MainFrame
+
+-- Tab switching function
+local function switchTab(tabName)
+    MainFrame2.Visible = (tabName == "Main")
+    MovementFrame.Visible = (tabName == "Movement")
+    VisualFrame.Visible = (tabName == "Visual")
+    UtilityFrame.Visible = (tabName == "Utility")
     
-    -- Create tab frame
-    local tabFrame = Instance.new("ScrollingFrame")
-    tabFrame.Name = tabDef.Name .. "Frame"
-    tabFrame.Size = UDim2.new(1, 0, 1, -65)
-    tabFrame.Position = UDim2.new(0, 0, 0, 65)
-    tabFrame.BackgroundTransparency = 1
-    tabFrame.ScrollBarThickness = 5
-    tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    tabFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    tabFrame.Visible = (tabDef.Name == "Main")
-    tabFrame.Parent = MainFrame
-    tabFrames[tabDef.Name] = tabFrame
-    
-    -- Connect tab button
-    tabButton.MouseButton1Click:Connect(function()
-        currentTab = tabDef.Name
-        -- Update all frames visibility
-        for name, frame in pairs(tabFrames) do
-            frame.Visible = (name == currentTab)
-        end
-        -- Update all button colors
-        for name, button in pairs(tabButtons) do
-            if name == currentTab then
-                button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-            else
-                button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            end
-        end
-    end)
+    MainTabBtn.BackgroundColor3 = (tabName == "Main") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
+    MovementTabBtn.BackgroundColor3 = (tabName == "Movement") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
+    VisualTabBtn.BackgroundColor3 = (tabName == "Visual") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
+    UtilityTabBtn.BackgroundColor3 = (tabName == "Utility") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
 end
 
--- Button Creator
-local function createButton(frame, name, callback)
-    local frameName = frame.Name
-    local childCount = #frame:GetChildren()
-    
+MainTabBtn.MouseButton1Click:Connect(function() switchTab("Main") end)
+MovementTabBtn.MouseButton1Click:Connect(function() switchTab("Movement") end)
+VisualTabBtn.MouseButton1Click:Connect(function() switchTab("Visual") end)
+UtilityTabBtn.MouseButton1Click:Connect(function() switchTab("Utility") end)
+
+-- Helper functions for creating UI elements
+local function createButton(parent, text, callback)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.9, 0, 0, 30)
-    button.Position = UDim2.new(0.05, 0, 0, childCount * 35)
+    button.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 35)
     button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    button.Text = name
+    button.Text = text
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Font = Enum.Font.SourceSans
     button.TextSize = 14
-    button.Parent = frame
+    button.Parent = parent
     button.MouseButton1Click:Connect(callback)
     return button
 end
 
--- Toggle Button Creator
-local function createToggleButton(frame, name, initialValue, callback)
-    local button = createButton(frame, name .. ": " .. (initialValue and "ON" or "OFF"), function()
-        initialValue = not initialValue
-        button.Text = name .. ": " .. (initialValue and "ON" or "OFF")
-        callback(initialValue)
+local function createToggle(parent, text, initial, callback)
+    local value = initial
+    local button = createButton(parent, text .. ": " .. (value and "ON" or "OFF"), function()
+        value = not value
+        button.Text = text .. ": " .. (value and "ON" or "OFF")
+        callback(value)
     end)
     return button
 end
 
--- Slider Creator
-local function createSlider(frame, name, min, max, default, callback)
-    local childCount = #frame:GetChildren()
-    
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0.9, 0, 0, 50)
-    sliderFrame.Position = UDim2.new(0.05, 0, 0, childCount * 55)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    sliderFrame.Parent = frame
+local function createSlider(parent, text, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0.9, 0, 0, 50)
+    frame.Position = UDim2.new(0.05, 0, 0, #parent:GetChildren() * 55)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    frame.Parent = parent
     
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
     label.BackgroundTransparency = 1
-    label.Text = name .. ": " .. default
+    label.Text = text .. ": " .. default
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.Font = Enum.Font.SourceSans
     label.TextSize = 14
-    label.Parent = sliderFrame
-    
-    local slider = Instance.new("TextButton")
-    slider.Size = UDim2.new(1, -20, 0, 20)
-    slider.Position = UDim2.new(0, 10, 0, 25)
-    slider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-    slider.Text = "← " .. default .. " →"
-    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    slider.Font = Enum.Font.SourceSans
-    slider.TextSize = 12
-    slider.Parent = sliderFrame
+    label.Parent = frame
     
     local value = default
-    slider.MouseButton1Click:Connect(function()
+    local sliderBtn = Instance.new("TextButton")
+    sliderBtn.Size = UDim2.new(1, -20, 0, 20)
+    sliderBtn.Position = UDim2.new(0, 10, 0, 25)
+    sliderBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    sliderBtn.Text = "← " .. value .. " →"
+    sliderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderBtn.Font = Enum.Font.SourceSans
+    sliderBtn.TextSize = 12
+    sliderBtn.Parent = frame
+    
+    sliderBtn.MouseButton1Click:Connect(function()
         value = value + 1
         if value > max then value = min end
-        slider.Text = "← " .. value .. " →"
-        label.Text = name .. ": " .. value
+        sliderBtn.Text = "← " .. value .. " →"
+        label.Text = text .. ": " .. value
         callback(value)
     end)
     
-    slider.MouseButton2Click:Connect(function()
+    sliderBtn.MouseButton2Click:Connect(function()
         value = value - 1
         if value < min then value = max end
-        slider.Text = "← " .. value .. " →"
-        label.Text = name .. ": " .. value
+        sliderBtn.Text = "← " .. value .. " →"
+        label.Text = text .. ": " .. value
         callback(value)
     end)
-    
-    return sliderFrame
 end
 
--- State Variables
+-- State
 local flying = false
 local dashing = false
 local spectating = false
 local spectatedPlayer = nil
 
 -- Core Functions
-
--- Fly
 local function fly()
     local character = LocalPlayer.Character
     if not character then return end
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
     
-    -- Remove existing body movers
-    local oldVelocity = rootPart:FindFirstChild("BodyVelocity")
-    if oldVelocity then oldVelocity:Destroy() end
-    local oldGyro = rootPart:FindFirstChild("BodyGyro")
-    if oldGyro then oldGyro:Destroy() end
+    local bodyVelocity = rootPart:FindFirstChild("BodyVelocity")
+    if not bodyVelocity then
+        bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
+        bodyVelocity.Parent = rootPart
+    end
     
-    -- Create new body movers
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
-    bodyVelocity.Parent = rootPart
-    
-    local bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 100000
-    bodyGyro.Parent = rootPart
+    local bodyGyro = rootPart:FindFirstChild("BodyGyro")
+    if not bodyGyro then
+        bodyGyro = Instance.new("BodyGyro")
+        bodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 100000
+        bodyGyro.Parent = rootPart
+    end
     
     local moveDirection = Vector3.new()
-    
     if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Camera.CFrame.LookVector end
     if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - Camera.CFrame.LookVector end
     if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - Camera.CFrame.RightVector end
@@ -256,27 +281,26 @@ local function createESP(player)
     esp.AlwaysOnTop = true
     esp.Adornee = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Name = "NameLabel"
-    textLabel.Size = UDim2.new(1, 0, 0, 30)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = player.Name
-    textLabel.TextColor3 = settings.espColor
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextSize = 16
-    textLabel.TextStrokeTransparency = 0
-    textLabel.Parent = esp
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, 0, 0, 30)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = settings.espColor
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextSize = 16
+    nameLabel.Parent = esp
     
-    local distanceLabel = Instance.new("TextLabel")
-    distanceLabel.Name = "DistanceLabel"
-    distanceLabel.Size = UDim2.new(1, 0, 0, 20)
-    distanceLabel.Position = UDim2.new(0, 0, 1, 0)
-    distanceLabel.BackgroundTransparency = 1
-    distanceLabel.Text = ""
-    distanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    distanceLabel.Font = Enum.Font.SourceSans
-    distanceLabel.TextSize = 12
-    distanceLabel.Parent = esp
+    local distLabel = Instance.new("TextLabel")
+    distLabel.Name = "DistanceLabel"
+    distLabel.Size = UDim2.new(1, 0, 0, 20)
+    distLabel.Position = UDim2.new(0, 0, 1, 0)
+    distLabel.BackgroundTransparency = 1
+    distLabel.Text = ""
+    distLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    distLabel.Font = Enum.Font.SourceSans
+    distLabel.TextSize = 12
+    distLabel.Parent = esp
     
     esp.Parent = ScreenGui
     espObjects[player] = esp
@@ -285,9 +309,7 @@ end
 local function updateESP()
     if not settings.espEnabled then
         for _, esp in pairs(espObjects) do
-            if esp then
-                esp.Enabled = false
-            end
+            if esp then esp.Enabled = false end
         end
         return
     end
@@ -308,43 +330,30 @@ local function updateESP()
                     esp.Adornee = rootPart
                     esp.Enabled = true
                     
-                    local localRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    local distance = math.huge
-                    if localRootPart then
-                        distance = (localRootPart.Position - rootPart.Position).Magnitude
-                        local nameLabel = esp:FindFirstChild("NameLabel")
-                        local distanceLabel = esp:FindFirstChild("DistanceLabel")
-                        if nameLabel then
-                            nameLabel.Text = player.Name
-                        end
-                        if distanceLabel then
-                            distanceLabel.Text = math.floor(distance) .. "m"
-                        end
-                    end
-                    
-                    if distance > settings.maxDistance then
-                        esp.Enabled = false
+                    local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if localRoot then
+                        local distance = (localRoot.Position - rootPart.Position).Magnitude
+                        local nameLbl = esp:FindFirstChild("NameLabel")
+                        local distLbl = esp:FindFirstChild("DistanceLabel")
+                        if nameLbl then nameLbl.Text = player.Name end
+                        if distLbl then distLbl.Text = math.floor(distance) .. "m" end
                     end
                 end
             else
-                if esp then
-                    esp.Enabled = false
-                end
+                if esp then esp.Enabled = false end
             end
         end
     end
 end
 
--- Teleport
+-- Other functions (teleport, dash, etc.)
 local function teleportToMouse()
     local mouse = LocalPlayer:GetMouse()
     local target = mouse.Target
     if target then
         local character = LocalPlayer.Character
         if character and character:FindFirstChild("HumanoidRootPart") then
-            local newCFrame = target.CFrame + Vector3.new(0, 5, 0)
-            character:SetPrimaryPartCFrame(newCFrame)
-            Camera.CFrame = CFrame.new(newCFrame.Position, newCFrame.Position + Camera.CFrame.LookVector)
+            character:SetPrimaryPartCFrame(target.CFrame + Vector3.new(0, 5, 0))
         end
     end
 end
@@ -355,7 +364,6 @@ local function teleportToPlayer(player)
     end
 end
 
--- Dash
 local function dash(direction)
     local character = LocalPlayer.Character
     if not character or dashing then return end
@@ -363,67 +371,33 @@ local function dash(direction)
     if not rootPart then return end
     
     dashing = true
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
-    bodyVelocity.Velocity = direction * settings.dashSpeed
-    bodyVelocity.Parent = rootPart
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1, 1, 1) * 100000
+    bv.Velocity = direction * settings.dashSpeed
+    bv.Parent = rootPart
     
     task.delay(settings.dashDuration, function()
-        bodyVelocity:Destroy()
+        bv:Destroy()
         dashing = false
     end)
 end
 
--- Fullbright
 local function setFullbright(enabled)
     if enabled then
         Lighting.Ambient = Color3.new(1, 1, 1)
         Lighting.Brightness = 2
         Lighting.ClockTime = 12
         Lighting.FogEnd = 100000
-        Lighting.FogStart = 0
         Lighting.GlobalShadows = false
     else
         Lighting.Ambient = Color3.new(0, 0, 0)
         Lighting.Brightness = 1
         Lighting.ClockTime = 14
         Lighting.FogEnd = 500
-        Lighting.FogStart = 0
         Lighting.GlobalShadows = true
     end
 end
 
--- FPS Boost
-local function setFPSBoost(enabled)
-    if enabled then
-        settings.RenderQualityLevel = 1
-        Lighting.GlobalShadows = false
-    else
-        settings.RenderQualityLevel = 10
-        Lighting.GlobalShadows = true
-    end
-end
-
--- Anti-AFK
-local function antiAFK()
-    local virtualUser = game:GetService("VirtualUser")
-    game:GetService("Players").LocalPlayer.Idled:Connect(function()
-        virtualUser:CaptureController()
-        virtualUser:ClickButton2(Vector2.new())
-    end)
-end
-
--- Auto-Reconnect
-local function autoReconnect()
-    while settings.autoReconnectEnabled do
-        task.wait(1)
-        if not LocalPlayer.Character then
-            LocalPlayer:LoadCharacter()
-        end
-    end
-end
-
--- Server Hop
 local function serverHop()
     local placeId = game.PlaceId
     local jobId = game.JobId
@@ -442,159 +416,34 @@ local function serverHop()
     end
     
     if #servers > 0 then
-        local randomServer = servers[math.random(1, #servers)]
-        TeleportService:TeleportToPlaceInstance(placeId, randomServer)
+        TeleportService:TeleportToPlaceInstance(placeId, servers[math.random(1, #servers)])
     end
 end
 
--- Spectate & Mimic
-local function spectate(player)
-    if player == LocalPlayer then return end
-    
-    spectating = true
-    spectatedPlayer = player
-    
-    Camera.CameraSubject = player.Character and player.Character:FindFirstChild("Humanoid")
-end
+-- Populate tabs
+-- Main Tab
+createToggle(MainFrame2, "Fly", false, function(v) flying = v end)
+createToggle(MainFrame2, "ESP", true, function(v) settings.espEnabled = v end)
+createButton(MainFrame2, "Teleport to Mouse", teleportToMouse)
+createButton(MainFrame2, "Server Hop", serverHop)
 
-local function stopSpectate()
-    spectating = false
-    spectatedPlayer = nil
-    Camera.CameraSubject = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-end
+-- Movement Tab
+createSlider(MovementFrame, "WalkSpeed", 1, 500, 16, function(v)
+    settings.walkSpeed = v
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if hum then hum.WalkSpeed = v end
+end)
 
-local function mimic()
-    if spectatedPlayer and spectatedPlayer.Character then
-        LocalPlayer.Character:SetPrimaryPartCFrame(spectatedPlayer.Character.HumanoidRootPart.CFrame)
-    end
-end
+createSlider(MovementFrame, "JumpPower", 1, 500, 50, function(v)
+    settings.jumpPower = v
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if hum then hum.JumpPower = v end
+end)
 
--- Search
-local function search(query)
-    local results = {}
+createButton(MovementFrame, "Dash Forward", function() dash(Camera.CFrame.LookVector) end)
+createButton(MovementFrame, "Dash Backward", function() dash(-Camera.CFrame.LookVector) end)
+createButton(MovementFrame, "Teleport to Player", function()
     for _, player in pairs(Players:GetPlayers()) do
-        if string.lower(player.Name):find(string.lower(query)) then
-            table.insert(results, player)
-        end
-    end
-    return results
-end
-
--- Dex (Simplified)
-local function openDex()
-    local dexGui = Instance.new("ScreenGui")
-    dexGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    
-    local dexFrame = Instance.new("Frame")
-    dexFrame.Size = UDim2.new(0, 300, 0, 400)
-    dexFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-    dexFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    dexFrame.Parent = dexGui
-    
-    local dexTitle = Instance.new("TextLabel")
-    dexTitle.Size = UDim2.new(1, 0, 0, 30)
-    dexTitle.Text = "Dex Explorer"
-    dexTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    dexTitle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    dexTitle.Parent = dexFrame
-    
-    local dexList = Instance.new("ScrollingFrame")
-    dexList.Size = UDim2.new(1, 0, 1, -30)
-    dexList.Position = UDim2.new(0, 0, 0, 30)
-    dexList.BackgroundTransparency = 1
-    dexList.Parent = dexFrame
-    
-    local function explore(instance, depth)
-        if depth > 5 then return end
-        for _, child in pairs(instance:GetChildren()) do
-            local button = Instance.new("TextButton")
-            button.Size = UDim2.new(1, 0, 0, 25)
-            button.Position = UDim2.new(0, depth * 15, 0, 0)
-            button.BackgroundTransparency = 1
-            button.Text = child.Name .. " [" .. child.ClassName .. "]"
-            button.TextXAlignment = Enum.TextXAlignment.Left
-            button.TextColor3 = Color3.fromRGB(255, 255, 255)
-            button.Font = Enum.Font.SourceSans
-            button.TextSize = 12
-            button.Parent = dexList
-            
-            button.MouseButton1Click:Connect(function()
-                dexList:ClearAllChildren()
-                explore(child, depth + 1)
-            end)
-        end
-    end
-    
-    explore(game, 0)
-end
-
--- Inf Yield
-local function loadInfYield()
-    local success, result = pcall(function()
-        return game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/EdgeIY/infinity/main/BetterSource.lua")
-    end)
-    
-    if success then
-        loadstring(result)()
-    else
-        print("Inf Yield failed to load")
-    end
-end
-
--- Cobalt
-local function loadCobalt()
-    local success, result = pcall(function()
-        return game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/Cobalt-Scripts/Cobalt/main/Cobalt.lua")
-    end)
-    
-    if success then
-        loadstring(result)()
-    else
-        print("Cobalt failed to load")
-    end
-end
-
--- MAIN TAB
-createToggleButton(tabFrames["Main"], "Fly", false, function(value)
-    flying = value
-end)
-
-createToggleButton(tabFrames["Main"], "ESP", true, function(value)
-    settings.espEnabled = value
-end)
-
-createButton(tabFrames["Main"], "Teleport to Mouse", teleportToMouse)
-
-createButton(tabFrames["Main"], "Server Hop", serverHop)
-
--- MOVEMENT TAB
-createSlider(tabFrames["Movement"], "WalkSpeed", 1, 500, 16, function(value)
-    settings.walkSpeed = value
-    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = value
-    end
-end)
-
-createSlider(tabFrames["Movement"], "JumpPower", 1, 500, 50, function(value)
-    settings.jumpPower = value
-    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-    if humanoid then
-        humanoid.JumpPower = value
-    end
-end)
-
-createButton(tabFrames["Movement"], "Dash Forward", function()
-    dash(Camera.CFrame.LookVector)
-end)
-
-createButton(tabFrames["Movement"], "Dash Backward", function()
-    dash(-Camera.CFrame.LookVector)
-end)
-
-createButton(tabFrames["Movement"], "Teleport to Player", function()
-    local players = Players:GetPlayers()
-    for _, player in pairs(players) do
         if player ~= LocalPlayer then
             teleportToPlayer(player)
             break
@@ -602,112 +451,59 @@ createButton(tabFrames["Movement"], "Teleport to Player", function()
     end
 end)
 
--- VISUAL TAB
-createToggleButton(tabFrames["Visual"], "Fullbright", false, function(value)
-    settings.fullbrightEnabled = value
-    setFullbright(value)
+-- Visual Tab
+createToggle(VisualFrame, "Fullbright", false, function(v) setFullbright(v) end)
+createToggle(VisualFrame, "FPS Boost", false, function(v)
+    settings.RenderQualityLevel = v and 1 or 10
+    Lighting.GlobalShadows = not v
 end)
 
-createToggleButton(tabFrames["Visual"], "FPS Boost", false, function(value)
-    settings.fpsBoostEnabled = value
-    setFPSBoost(value)
-end)
-
--- UTILITY TAB
-createToggleButton(tabFrames["Utility"], "Anti-AFK", true, function(value)
-    settings.antiAFKEnabled = value
-end)
-
-createToggleButton(tabFrames["Utility"], "Auto-Reconnect", false, function(value)
-    settings.autoReconnectEnabled = value
-    if value then
-        task.spawn(autoReconnect)
+-- Utility Tab
+createToggle(UtilityFrame, "Anti-AFK", true, function(v) settings.antiAFKEnabled = v end)
+createToggle(UtilityFrame, "Auto-Reconnect", false, function(v)
+    settings.autoReconnectEnabled = v
+    if v then
+        task.spawn(function()
+            while settings.autoReconnectEnabled do
+                task.wait(1)
+                if not LocalPlayer.Character then LocalPlayer:LoadCharacter() end
+            end
+        end)
     end
 end)
 
-createButton(tabFrames["Utility"], "Spectate", function()
-    local players = Players:GetPlayers()
-    for _, player in pairs(players) do
+createButton(UtilityFrame, "Spectate", function()
+    for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            spectate(player)
+            spectating = true
+            spectatedPlayer = player
+            Camera.CameraSubject = player.Character and player.Character:FindFirstChild("Humanoid")
             break
         end
     end
 end)
 
-createButton(tabFrames["Utility"], "Stop Spectate", stopSpectate)
-
-createButton(tabFrames["Utility"], "Mimic", mimic)
-
-createButton(tabFrames["Utility"], "Search Player", function()
-    local query = "Player"
-    local results = search(query)
-    for _, player in pairs(results) do
-        print("Found: " .. player.Name)
-    end
+createButton(UtilityFrame, "Stop Spectate", function()
+    spectating = false
+    spectatedPlayer = nil
+    Camera.CameraSubject = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
 end)
 
-createButton(tabFrames["Utility"], "Open Dex", openDex)
-
-createButton(tabFrames["Utility"], "Load Inf Yield", loadInfYield)
-
-createButton(tabFrames["Utility"], "Load Cobalt", loadCobalt)
+createButton(UtilityFrame, "Mimic", function()
+    if spectatedPlayer and spectatedPlayer.Character then
+        LocalPlayer.Character:SetPrimaryPartCFrame(spectatedPlayer.Character.HumanoidRootPart.CFrame)
+    end
+end)
 
 -- Main Loop
 RunService.RenderStepped:Connect(function()
-    if flying then
-        fly()
-    end
-    
-    if settings.espEnabled then
-        updateESP()
-    end
-    
-    if spectating and spectatedPlayer then
-        if not spectatedPlayer.Character then
-            stopSpectate()
-        end
-    end
+    if flying then fly() end
+    if settings.espEnabled then updateESP() end
 end)
-
--- Character Added
-LocalPlayer.CharacterAdded:Connect(function(character)
-    task.wait(0.5)
-    
-    local humanoid = character:FindFirstChild("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = settings.walkSpeed
-        humanoid.JumpPower = settings.jumpPower
-    end
-    
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if rootPart then
-        local bodyVelocity = rootPart:FindFirstChild("BodyVelocity")
-        if bodyVelocity then bodyVelocity:Destroy() end
-        local bodyGyro = rootPart:FindFirstChild("BodyGyro")
-        if bodyGyro then bodyGyro:Destroy() end
-    end
-    
-    flying = false
-end)
-
--- Player Added
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        createESP(player)
-    end)
-end)
-
--- Anti-AFK Start
-if settings.antiAFKEnabled then
-    antiAFK()
-end
 
 -- Keybinds
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    
     if input.KeyCode == Enum.KeyCode.F then
         flying = not flying
     elseif input.KeyCode == Enum.KeyCode.LeftControl then
@@ -717,5 +513,5 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("Delta Ultimate Script Loaded!")
-print("Keybinds: F = Fly, Ctrl = Dash, T = Teleport to Mouse")
+print("Delta Ultimate Script v5 Loaded!")
+print("Keybinds: F = Fly, Ctrl = Dash, T = Teleport")
