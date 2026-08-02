@@ -1,5 +1,5 @@
 --[[
-    Delta Executor - Ultimate Utility Script
+    Delta Executor - Ultimate Utility Script v3
     Features: Fly, ESP, TP, WalkSpeed, JumpPower, Dash, Fullbright, FPS Boost,
     Server Hop, Anti-AFK, Auto-Reconnect, Spectate & Mimic, Search, Dex,
     Inf Yield, Cobalt, and more
@@ -39,7 +39,7 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Main Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 450)
+MainFrame.Size = UDim2.new(0, 350, 0, 500)
 MainFrame.Position = UDim2.new(0, 10, 0, 10)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BackgroundTransparency = 0.1
@@ -57,36 +57,98 @@ Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 20
 Title.Parent = MainFrame
 
--- Scrolling Frame
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Size = UDim2.new(1, 0, 1, -30)
-ScrollingFrame.Position = UDim2.new(0, 0, 0, 30)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.ScrollBarThickness = 5
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ScrollingFrame.Parent = MainFrame
+-- Tab Bar
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(1, 0, 0, 35)
+TabBar.Position = UDim2.new(0, 0, 0, 30)
+TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+TabBar.Parent = MainFrame
 
--- Button Creator
-local buttonCount = 0
-local function createButton(name, callback)
-    buttonCount = buttonCount + 1
+-- Tabs
+local tabs = {}
+local currentTab = "Main"
+
+local function createTab(name)
+    local tab = Instance.new("TextButton")
+    tab.Size = UDim2.new(0.2, 0, 1, 0)
+    tab.Position = UDim2.new((#tabs) * 0.2, 0, 0, 0)
+    tab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    tab.Text = name
+    tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tab.Font = Enum.Font.SourceSans
+    tab.TextSize = 14
+    tab.Parent = TabBar
+    tabs[name] = tab
+    return tab
+end
+
+-- Tab Content Frames
+local tabFrames = {}
+
+local function createTabFrame(name)
+    local frame = Instance.new("ScrollingFrame")
+    frame.Size = UDim2.new(1, 0, 1, -65)
+    frame.Position = UDim2.new(0, 0, 0, 65)
+    frame.BackgroundTransparency = 1
+    frame.ScrollBarThickness = 5
+    frame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    frame.Visible = (name == "Main")
+    frame.Parent = MainFrame
+    tabFrames[name] = frame
+    return frame
+end
+
+-- Create tabs
+local mainTab = createTab("Main")
+local movementTab = createTab("Movement")
+local visualTab = createTab("Visual")
+local utilityTab = createTab("Utility")
+
+-- Create tab frames
+local mainFrame = createTabFrame("Main")
+local movementFrame = createTabFrame("Movement")
+local visualFrame = createTabFrame("Visual")
+local utilityFrame = createTabFrame("Utility")
+
+-- Tab switching
+for name, tab in pairs(tabs) do
+    tab.MouseButton1Click:Connect(function()
+        currentTab = name
+        for tabName, tabFrame in pairs(tabFrames) do
+            tabFrame.Visible = (tabName == name)
+        end
+        for tabName, tabButton in pairs(tabs) do
+            tabButton.BackgroundColor3 = (tabName == name) and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(50, 50, 50)
+        end
+    end)
+end
+
+-- Button Creator (with frame parameter)
+local buttonCounts = {}
+local function createButton(frame, name, callback)
+    local frameName = frame.Name
+    if not buttonCounts[frameName] then
+        buttonCounts[frameName] = 0
+    end
+    buttonCounts[frameName] = buttonCounts[frameName] + 1
+    
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.9, 0, 0, 30)
-    button.Position = UDim2.new(0.05, 0, 0, (buttonCount - 1) * 35)
+    button.Position = UDim2.new(0.05, 0, 0, (buttonCounts[frameName] - 1) * 35)
     button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     button.Text = name
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Font = Enum.Font.SourceSans
     button.TextSize = 14
-    button.Parent = ScrollingFrame
+    button.Parent = frame
     button.MouseButton1Click:Connect(callback)
     return button
 end
 
 -- Toggle Button Creator
-local function createToggleButton(name, initialValue, callback)
-    local button = createButton(name .. ": " .. (initialValue and "ON" or "OFF"), function()
+local function createToggleButton(frame, name, initialValue, callback)
+    local button = createButton(frame, name .. ": " .. (initialValue and "ON" or "OFF"), function()
         initialValue = not initialValue
         button.Text = name .. ": " .. (initialValue and "ON" or "OFF")
         callback(initialValue)
@@ -95,13 +157,18 @@ local function createToggleButton(name, initialValue, callback)
 end
 
 -- Slider Creator
-local function createSlider(name, min, max, default, callback)
-    buttonCount = buttonCount + 1
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.9, 0, 0, 50)
-    frame.Position = UDim2.new(0.05, 0, 0, (buttonCount - 1) * 55)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    frame.Parent = ScrollingFrame
+local function createSlider(frame, name, min, max, default, callback)
+    local frameName = frame.Name
+    if not buttonCounts[frameName] then
+        buttonCounts[frameName] = 0
+    end
+    buttonCounts[frameName] = buttonCounts[frameName] + 1
+    
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0.9, 0, 0, 50)
+    sliderFrame.Position = UDim2.new(0.05, 0, 0, (buttonCounts[frameName] - 1) * 55)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    sliderFrame.Parent = frame
     
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
@@ -110,7 +177,7 @@ local function createSlider(name, min, max, default, callback)
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.Font = Enum.Font.SourceSans
     label.TextSize = 14
-    label.Parent = frame
+    label.Parent = sliderFrame
     
     local slider = Instance.new("TextButton")
     slider.Size = UDim2.new(1, -20, 0, 20)
@@ -120,7 +187,7 @@ local function createSlider(name, min, max, default, callback)
     slider.TextColor3 = Color3.fromRGB(255, 255, 255)
     slider.Font = Enum.Font.SourceSans
     slider.TextSize = 12
-    slider.Parent = frame
+    slider.Parent = sliderFrame
     
     local value = default
     slider.MouseButton1Click:Connect(function()
@@ -139,7 +206,7 @@ local function createSlider(name, min, max, default, callback)
         callback(value)
     end)
     
-    return frame
+    return sliderFrame
 end
 
 -- State Variables
@@ -150,26 +217,27 @@ local spectatedPlayer = nil
 
 -- Core Functions
 
--- Fly
+-- Fly (Fixed)
 local function fly()
     local character = LocalPlayer.Character
     if not character then return end
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
     
-    local bodyVelocity = rootPart:FindFirstChild("BodyVelocity")
-    if not bodyVelocity then
-        bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
-        bodyVelocity.Parent = rootPart
-    end
+    -- Remove existing body movers
+    local oldVelocity = rootPart:FindFirstChild("BodyVelocity")
+    if oldVelocity then oldVelocity:Destroy() end
+    local oldGyro = rootPart:FindFirstChild("BodyGyro")
+    if oldGyro then oldGyro:Destroy() end
     
-    local bodyGyro = rootPart:FindFirstChild("BodyGyro")
-    if not bodyGyro then
-        bodyGyro = Instance.new("BodyGyro")
-        bodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 100000
-        bodyGyro.Parent = rootPart
-    end
+    -- Create new body movers
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
+    bodyVelocity.Parent = rootPart
+    
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 100000
+    bodyGyro.Parent = rootPart
     
     local moveDirection = Vector3.new()
     
@@ -188,7 +256,7 @@ local function fly()
     bodyGyro.CFrame = Camera.CFrame
 end
 
--- ESP
+-- ESP (Fixed)
 local espObjects = {}
 local function createESP(player)
     if player == LocalPlayer then return end
@@ -201,7 +269,7 @@ local function createESP(player)
     
     local textLabel = Instance.new("TextLabel")
     textLabel.Name = "NameLabel"
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.Size = UDim2.new(1, 0, 0, 30)
     textLabel.BackgroundTransparency = 1
     textLabel.Text = player.Name
     textLabel.TextColor3 = settings.espColor
@@ -251,7 +319,6 @@ local function updateESP()
                     esp.Adornee = rootPart
                     esp.Enabled = true
                     
-                    -- Distance check
                     local localRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                     local distance = math.huge
                     if localRootPart then
@@ -288,7 +355,6 @@ local function teleportToMouse()
         if character and character:FindFirstChild("HumanoidRootPart") then
             local newCFrame = target.CFrame + Vector3.new(0, 5, 0)
             character:SetPrimaryPartCFrame(newCFrame)
-            -- Also move camera
             Camera.CFrame = CFrame.new(newCFrame.Position, newCFrame.Position + Camera.CFrame.LookVector)
         end
     end
@@ -344,12 +410,6 @@ local function setFPSBoost(enabled)
     if enabled then
         settings.RenderQualityLevel = 1
         Lighting.GlobalShadows = false
-        workspace.DescendantAdded:Connect(function(part)
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.SmoothPlastic
-                part.CastShadow = false
-            end
-        end)
     else
         settings.RenderQualityLevel = 10
         Lighting.GlobalShadows = true
@@ -432,36 +492,8 @@ local function search(query)
     return results
 end
 
--- Dex (Explorer)
+-- Dex (Simplified)
 local function openDex()
-    local Dex = {
-        Current = nil,
-        Children = {}
-    }
-    
-    -- Simple object explorer
-    local function explore(instance, depth)
-        if depth > 5 then return nil end
-        local info = {
-            Name = instance.Name,
-            Class = instance.ClassName,
-            Instance = instance,
-            Children = {}
-        }
-        
-        for _, child in pairs(instance:GetChildren()) do
-            local childInfo = explore(child, depth + 1)
-            if childInfo then
-                table.insert(info.Children, childInfo)
-            end
-        end
-        
-        return info
-    end
-    
-    Dex.Current = explore(game, 0)
-    
-    -- Display in a simple GUI
     local dexGui = Instance.new("ScreenGui")
     dexGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     
@@ -484,16 +516,14 @@ local function openDex()
     dexList.BackgroundTransparency = 1
     dexList.Parent = dexFrame
     
-    local function displayChildren(instance, level)
-        if not instance or not instance.Children then return end
-        dexList:ClearAllChildren()
-        
-        for _, child in pairs(instance.Children) do
+    local function explore(instance, depth)
+        if depth > 5 then return end
+        for _, child in pairs(instance:GetChildren()) do
             local button = Instance.new("TextButton")
             button.Size = UDim2.new(1, 0, 0, 25)
-            button.Position = UDim2.new(0, level * 15, 0, 0)
+            button.Position = UDim2.new(0, depth * 15, 0, 0)
             button.BackgroundTransparency = 1
-            button.Text = child.Name .. " [" .. child.Class .. "]"
+            button.Text = child.Name .. " [" .. child.ClassName .. "]"
             button.TextXAlignment = Enum.TextXAlignment.Left
             button.TextColor3 = Color3.fromRGB(255, 255, 255)
             button.Font = Enum.Font.SourceSans
@@ -501,14 +531,13 @@ local function openDex()
             button.Parent = dexList
             
             button.MouseButton1Click:Connect(function()
-                displayChildren(child, level + 1)
+                dexList:ClearAllChildren()
+                explore(child, depth + 1)
             end)
         end
     end
     
-    if Dex.Current then
-        displayChildren(Dex.Current, 0)
-    end
+    explore(game, 0)
 end
 
 -- Inf Yield
@@ -520,24 +549,7 @@ local function loadInfYield()
     if success then
         loadstring(result)()
     else
-        -- Fallback simple admin commands
-        local commands = {
-            [";fly"] = function() flying = not flying end,
-            [";ws"] = function(v) settings.walkSpeed = v end,
-            [";jp"] = function(v) settings.jumpPower = v end,
-            [";tp"] = function(v) 
-                local player = Players:FindFirstChild(v)
-                if player then teleportToPlayer(player) end
-            end
-        }
-        
-        LocalPlayer.Chatted:Connect(function(msg)
-            local parts = string.split(msg, " ")
-            local cmd = parts[1]
-            if commands[cmd] then
-                commands[cmd](tonumber(parts[2]) or nil)
-            end
-        end)
+        print("Inf Yield failed to load")
     end
 end
 
@@ -550,46 +562,25 @@ local function loadCobalt()
     if success then
         loadstring(result)()
     else
-        -- Fallback: Basic ESP and aimbot
-        print("Cobalt not available, using basic features")
+        print("Cobalt failed to load")
     end
 end
 
--- UI Creation
-createToggleButton("Fly", false, function(value)
+-- MAIN TAB
+createToggleButton(mainFrame, "Fly", false, function(value)
     flying = value
 end)
 
-createToggleButton("ESP", true, function(value)
+createToggleButton(mainFrame, "ESP", true, function(value)
     settings.espEnabled = value
 end)
 
-createButton("Teleport to Mouse", teleportToMouse)
+createButton(mainFrame, "Teleport to Mouse", teleportToMouse)
 
-createButton("Teleport to Player", function()
-    -- Create player selection
-    local playerList = {}
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            table.insert(playerList, player.Name)
-        end
-    end
-    
-    local selection = table.concat(playerList, ", ")
-    local chosen = nil
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and selection:find(player.Name) then
-            chosen = player
-            break
-        end
-    end
-    
-    if chosen then
-        teleportToPlayer(chosen)
-    end
-end)
+createButton(mainFrame, "Server Hop", serverHop)
 
-createSlider("WalkSpeed", 1, 500, 16, function(value)
+-- MOVEMENT TAB
+createSlider(movementFrame, "WalkSpeed", 1, 500, 16, function(value)
     settings.walkSpeed = value
     local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
     if humanoid then
@@ -597,7 +588,7 @@ createSlider("WalkSpeed", 1, 500, 16, function(value)
     end
 end)
 
-createSlider("JumpPower", 1, 500, 50, function(value)
+createSlider(movementFrame, "JumpPower", 1, 500, 50, function(value)
     settings.jumpPower = value
     local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
     if humanoid then
@@ -605,59 +596,62 @@ createSlider("JumpPower", 1, 500, 50, function(value)
     end
 end)
 
-createButton("Dash Forward", function()
+createButton(movementFrame, "Dash Forward", function()
     dash(Camera.CFrame.LookVector)
 end)
 
-createButton("Dash Backward", function()
+createButton(movementFrame, "Dash Backward", function()
     dash(-Camera.CFrame.LookVector)
 end)
 
-createToggleButton("Fullbright", false, function(value)
+createButton(movementFrame, "Teleport to Player", function()
+    local players = Players:GetPlayers()
+    for _, player in pairs(players) do
+        if player ~= LocalPlayer then
+            teleportToPlayer(player)
+            break
+        end
+    end
+end)
+
+-- VISUAL TAB
+createToggleButton(visualFrame, "Fullbright", false, function(value)
     settings.fullbrightEnabled = value
     setFullbright(value)
 end)
 
-createToggleButton("FPS Boost", false, function(value)
+createToggleButton(visualFrame, "FPS Boost", false, function(value)
     settings.fpsBoostEnabled = value
     setFPSBoost(value)
 end)
 
-createToggleButton("Anti-AFK", true, function(value)
+-- UTILITY TAB
+createToggleButton(utilityFrame, "Anti-AFK", true, function(value)
     settings.antiAFKEnabled = value
 end)
 
-createToggleButton("Auto-Reconnect", false, function(value)
+createToggleButton(utilityFrame, "Auto-Reconnect", false, function(value)
     settings.autoReconnectEnabled = value
     if value then
         task.spawn(autoReconnect)
     end
 end)
 
-createButton("Server Hop", serverHop)
-
-createButton("Spectate", function()
-    -- Spectate next player
+createButton(utilityFrame, "Spectate", function()
     local players = Players:GetPlayers()
-    local currentIndex = 1
-    for i, player in pairs(players) do
-        if player == spectatedPlayer then
-            currentIndex = i
+    for _, player in pairs(players) do
+        if player ~= LocalPlayer then
+            spectate(player)
             break
         end
     end
-    
-    local nextPlayer = players[currentIndex + 1] or players[1]
-    if nextPlayer and nextPlayer ~= LocalPlayer then
-        spectate(nextPlayer)
-    end
 end)
 
-createButton("Stop Spectate", stopSpectate)
+createButton(utilityFrame, "Stop Spectate", stopSpectate)
 
-createButton("Mimic", mimic)
+createButton(utilityFrame, "Mimic", mimic)
 
-createButton("Search Player", function()
+createButton(utilityFrame, "Search Player", function()
     local query = "Player"
     local results = search(query)
     for _, player in pairs(results) do
@@ -665,11 +659,11 @@ createButton("Search Player", function()
     end
 end)
 
-createButton("Open Dex", openDex)
+createButton(utilityFrame, "Open Dex", openDex)
 
-createButton("Load Inf Yield", loadInfYield)
+createButton(utilityFrame, "Load Inf Yield", loadInfYield)
 
-createButton("Load Cobalt", loadCobalt)
+createButton(utilityFrame, "Load Cobalt", loadCobalt)
 
 -- Main Loop
 RunService.RenderStepped:Connect(function()
@@ -692,14 +686,12 @@ end)
 LocalPlayer.CharacterAdded:Connect(function(character)
     task.wait(0.5)
     
-    -- Apply walk speed and jump power
     local humanoid = character:FindFirstChild("Humanoid")
     if humanoid then
         humanoid.WalkSpeed = settings.walkSpeed
         humanoid.JumpPower = settings.jumpPower
     end
     
-    -- Clean up fly
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if rootPart then
         local bodyVelocity = rootPart:FindFirstChild("BodyVelocity")
