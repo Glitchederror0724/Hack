@@ -58,7 +58,7 @@ TabBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 TabBar.Parent = MainFrame
 
 local tabButtons = {}
-local tabNames = {"Main", "Movement", "Visual", "Utility", "Info"}
+local tabNames = {"Main", "Movement", "Visual", "Utility", "Teleport", "Info"}
 local frames = {}
 
 -- Create frames first
@@ -78,13 +78,13 @@ end
 -- Create tab buttons
 for i, name in ipairs(tabNames) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.2, 0, 1, 0)
-    btn.Position = UDim2.new((i - 1) * 0.2, 0, 0, 0)
+    btn.Size = UDim2.new(0.1667, 0, 1, 0)
+    btn.Position = UDim2.new((i - 1) * 0.1667, 0, 0, 0)
     btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
+    btn.TextSize = 12
     btn.Parent = TabBar
     tabButtons[name] = btn
 end
@@ -229,57 +229,43 @@ local function createTextBox(parent, placeholder, executeText)
     return {textBox = textBox, executeBtn = executeBtn}
 end
 
--- Fly function
-local function fly()
+-- FLY SYSTEM
+local function startFly()
     local character = LocalPlayer.Character
     if not character then return end
+    
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart or not humanoid or humanoid.State == Enum.HumanoidStateType.Physics then return end
-
-    local bodyVelocity = rootPart:FindFirstChild("DeltaFlyBV")
-    local bodyGyro = rootPart:FindFirstChild("DeltaFlyBG")
-
-    if not bodyVelocity then
-        bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.Name = "DeltaFlyBV"
-        bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-        bodyVelocity.P = 1250
-        bodyVelocity.Velocity = Vector3.new()
-        bodyVelocity.Parent = rootPart
-    end
-
-    if not bodyGyro then
-        bodyGyro = Instance.new("BodyGyro")
-        bodyGyro.Name = "DeltaFlyBG"
-        bodyGyro.MaxTorque = Vector3.new(100000, 100000, 100000)
-        bodyGyro.P = 1250
-        bodyGyro.CFrame = rootPart.CFrame
-        bodyGyro.Parent = rootPart
-    end
-
-    local moveDirection = Vector3.new()
-    local cf = Camera.CFrame
-
-    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + cf.LookVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - cf.LookVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - cf.RightVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + cf.RightVector end
-    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
-
-    if moveDirection.Magnitude > 0 then
-        moveDirection = moveDirection.Unit * settings.flySpeed
-    end
-
-    bodyVelocity.Velocity = moveDirection
-    bodyGyro.CFrame = cf
+    if not humanoid or not rootPart then return end
+    
+    humanoid:ChangeState(Enum.HumanoidStateType.Flying)
+    
+    local bv = Instance.new("BodyVelocity")
+    bv.Name = "DeltaFlyBV"
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.P = 10000
+    bv.Velocity = Vector3.new()
+    bv.Parent = rootPart
+    
+    local bg = Instance.new("BodyGyro")
+    bg.Name = "DeltaFlyBG"
+    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bg.P = 10000
+    bg.D = 100
+    bg.CFrame = rootPart.CFrame
+    bg.Parent = rootPart
 end
 
 local function stopFly()
     local character = LocalPlayer.Character
     if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
         local rootPart = character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end
+        
         if rootPart then
             local bv = rootPart:FindFirstChild("DeltaFlyBV")
             local bg = rootPart:FindFirstChild("DeltaFlyBG")
@@ -287,6 +273,58 @@ local function stopFly()
             if bg then bg:Destroy() end
         end
     end
+end
+
+local flyConnection = nil
+local function enableFly()
+    startFly()
+    
+    if flyConnection then flyConnection:Disconnect() end
+    
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if not flying then return end
+        
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return end
+        
+        local bv = rootPart:FindFirstChild("DeltaFlyBV")
+        local bg = rootPart:FindFirstChild("DeltaFlyBG")
+        
+        if not bv or not bg then
+            startFly()
+            return
+        end
+        
+        local cf = Camera.CFrame
+        local moveDirection = Vector3.new()
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + cf.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - cf.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - cf.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + cf.RightVector end
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
+        
+        if moveDirection.Magnitude > 0 then
+            moveDirection = moveDirection.Unit * settings.flySpeed
+        end
+        
+        bv.Velocity = moveDirection
+        bg.CFrame = cf
+    end)
+end
+
+local function disableFly()
+    flying = false
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+    stopFly()
 end
 
 -- ESP functions
@@ -358,11 +396,91 @@ local function removeAllESP()
     end
 end
 
+-- TELEPORT SYSTEM
+local function teleportToPlayer(targetPlayer)
+    if not targetPlayer then return end
+    
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+    
+    local targetChar = targetPlayer.Character
+    if not targetChar then return end
+    
+    local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+    if not targetRoot then return end
+    
+    -- Teleport to player
+    rootPart.CFrame = targetRoot.CFrame * CFrame.new(0, 3, 0)
+    
+    -- Notification
+    local notification = Instance.new("TextLabel")
+    notification.Size = UDim2.new(0, 200, 0, 30)
+    notification.Position = UDim2.new(0.5, -100, 0.8, 0)
+    notification.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    notification.Text = "Teleported to " .. targetPlayer.Name
+    notification.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notification.Font = Enum.Font.SourceSansBold
+    notification.TextSize = 14
+    notification.Parent = ScreenGui
+    
+    -- Remove notification after 2 seconds
+    task.delay(2, function()
+        notification:Destroy()
+    end)
+end
+
+-- Player list for teleport tab
+local function refreshPlayerList()
+    -- Clear existing player buttons
+    for _, child in ipairs(frames["Teleport"]:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    
+    -- Create buttons for each player
+    local yPos = 0
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local button = Instance.new("TextButton")
+            button.Size = UDim2.new(0.9, 0, 0, 35)
+            button.Position = UDim2.new(0.05, 0, 0, yPos)
+            button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            button.Text = player.Name .. " (Click to TP)"
+            button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            button.Font = Enum.Font.SourceSans
+            button.TextSize = 14
+            button.Parent = frames["Teleport"]
+            
+            -- Store player reference
+            button:SetAttribute("TargetPlayer", player.Name)
+            
+            -- Connect click
+            button.MouseButton1Click:Connect(function()
+                local targetName = button:GetAttribute("TargetPlayer")
+                local target = Players:FindFirstChild(targetName)
+                if target then
+                    teleportToPlayer(target)
+                end
+            end)
+            
+            yPos = yPos + 40
+        end
+    end
+    
+    -- Update canvas size
+    frames["Teleport"].CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
+end
+
 -- Player added/removed connections
 Players.PlayerAdded:Connect(function(player)
     if settings.espEnabled then
         createESP(player)
     end
+    refreshPlayerList()
 end)
 
 Players.PlayerRemoving:Connect(function(player)
@@ -370,6 +488,7 @@ Players.PlayerRemoving:Connect(function(player)
         espObjects[player]:Destroy()
         espObjects[player] = nil
     end
+    refreshPlayerList()
 end)
 
 -- Main loop
@@ -406,12 +525,13 @@ createButton(frames["Main"], "Refresh ESP", function()
 end)
 
 -- MOVEMENT TAB
-createToggle(frames["Movement"], "Fly", flying, function(value)
-    flying = value
+createToggle(frames["Movement"], "Fly", false, function(value)
     if value then
-        fly()
+        flying = true
+        enableFly()
     else
-        stopFly()
+        flying = false
+        disableFly()
     end
 end)
 
@@ -469,11 +589,19 @@ createButton(frames["Utility"], "Teleport to Nearest", function()
         end
     end
     if nearest then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = nearest.Character.HumanoidRootPart.CFrame
+        teleportToPlayer(nearest)
     end
 end)
 
 createTextBox(frames["Utility"], "Enter script URL...", "Load")
+
+-- TELEPORT TAB
+createButton(frames["Teleport"], "Refresh Player List", function()
+    refreshPlayerList()
+end)
+
+-- Initial player list
+refreshPlayerList()
 
 -- INFO TAB
 local function createInfoLabel(parent, text)
