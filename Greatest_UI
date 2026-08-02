@@ -33,7 +33,7 @@ local LocalPlayer = Players.LocalPlayer
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Bende's Ultimate GUI"
+ScreenGui.Name = "DeltaUltimateGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
@@ -200,6 +200,7 @@ local function createESP(player)
     esp.Adornee = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     
     local textLabel = Instance.new("TextLabel")
+    textLabel.Name = "NameLabel"
     textLabel.Size = UDim2.new(1, 0, 1, 0)
     textLabel.BackgroundTransparency = 1
     textLabel.Text = player.Name
@@ -210,6 +211,7 @@ local function createESP(player)
     textLabel.Parent = esp
     
     local distanceLabel = Instance.new("TextLabel")
+    distanceLabel.Name = "DistanceLabel"
     distanceLabel.Size = UDim2.new(1, 0, 0, 20)
     distanceLabel.Position = UDim2.new(0, 0, 1, 0)
     distanceLabel.BackgroundTransparency = 1
@@ -226,7 +228,9 @@ end
 local function updateESP()
     if not settings.espEnabled then
         for _, esp in pairs(espObjects) do
-            esp.Enabled = false
+            if esp then
+                esp.Enabled = false
+            end
         end
         return
     end
@@ -243,21 +247,28 @@ local function updateESP()
                     esp = espObjects[player]
                 end
                 
-                esp.Adornee = rootPart
-                esp.Enabled = true
-                
-                -- Distance check
-                local localRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                local distance = math.huge
-                if localRootPart then
-                    distance = (localRootPart.Position - rootPart.Position).Magnitude
-                    if esp:FindFirstChild("TextLabel") then
-                        esp.TextLabel.Text = player.Name .. " [" .. math.floor(distance) .. "m]"
+                if esp then
+                    esp.Adornee = rootPart
+                    esp.Enabled = true
+                    
+                    -- Distance check
+                    local localRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local distance = math.huge
+                    if localRootPart then
+                        distance = (localRootPart.Position - rootPart.Position).Magnitude
+                        local nameLabel = esp:FindFirstChild("NameLabel")
+                        local distanceLabel = esp:FindFirstChild("DistanceLabel")
+                        if nameLabel then
+                            nameLabel.Text = player.Name
+                        end
+                        if distanceLabel then
+                            distanceLabel.Text = math.floor(distance) .. "m"
+                        end
                     end
-                end
-                
-                if distance > settings.maxDistance then
-                    esp.Enabled = false
+                    
+                    if distance > settings.maxDistance then
+                        esp.Enabled = false
+                    end
                 end
             else
                 if esp then
@@ -430,7 +441,7 @@ local function openDex()
     
     -- Simple object explorer
     local function explore(instance, depth)
-        if depth > 5 then return end
+        if depth > 5 then return nil end
         local info = {
             Name = instance.Name,
             Class = instance.ClassName,
@@ -439,7 +450,10 @@ local function openDex()
         }
         
         for _, child in pairs(instance:GetChildren()) do
-            table.insert(info.Children, explore(child, depth + 1))
+            local childInfo = explore(child, depth + 1)
+            if childInfo then
+                table.insert(info.Children, childInfo)
+            end
         end
         
         return info
@@ -471,6 +485,9 @@ local function openDex()
     dexList.Parent = dexFrame
     
     local function displayChildren(instance, level)
+        if not instance or not instance.Children then return end
+        dexList:ClearAllChildren()
+        
         for _, child in pairs(instance.Children) do
             local button = Instance.new("TextButton")
             button.Size = UDim2.new(1, 0, 0, 25)
@@ -484,14 +501,14 @@ local function openDex()
             button.Parent = dexList
             
             button.MouseButton1Click:Connect(function()
-                -- Clear and show children
-                dexList:ClearAllChildren()
                 displayChildren(child, level + 1)
             end)
         end
     end
     
-    displayChildren(Dex.Current, 0)
+    if Dex.Current then
+        displayChildren(Dex.Current, 0)
+    end
 end
 
 -- Inf Yield
