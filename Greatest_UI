@@ -1,10 +1,3 @@
---[[  
-Delta Executor - Ultimate Utility Script v5.1  
-Patched by Delta maker script.  
-Fixed: Line 180, Fly function, ESP, Utility tab.  
-Added: Direct script loader for Dex, Cobalt, Inf Yield.  
-]]
-
 -- Services  
 local Players = game:GetService("Players")  
 local RunService = game:GetService("RunService")  
